@@ -4,6 +4,9 @@
   "uuid": "gnome-wallpaper-engine@gjs.com",
   "url": "https://github.com/achu94/gnome-wallpaper-engine",
   "shell-version": [
-    "46"
+    "45",
+    "46",
+    "47",
+    "48"
   ]
 }
