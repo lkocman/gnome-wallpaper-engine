@@ -68,7 +68,7 @@ export default class WallpaperExtension extends Extension {
 
         const videoPath = GLib.build_filenamev([this.path, "backgrounds", filename]);
 
-        const cmd = [
+        let cmd = [
             "mpv",
             "--no-border",
             "--loop=inf",
@@ -78,6 +78,11 @@ export default class WallpaperExtension extends Extension {
             "--no-osd-bar",
             "--title=wallpaper_bg",
             "--x11-name=wallpaper_bg",
+            "--panscan=1.0",
+            "--video-unscaled=no",
+            "--input-default-bindings=no",
+            "--input-vo-keyboard=no",
+            "--cursor-autohide=no",
             "--hwdec=auto",
             videoPath,
         ];
@@ -121,12 +126,13 @@ export default class WallpaperExtension extends Extension {
                 metaWin.set_skip_taskbar(true);
                 metaWin.stick();
 
-                if (Cairo && Cairo.Region) {
-                    try {
-                        const emptyRegion = new Cairo.Region();
-                        metaWin.set_input_region(emptyRegion);
-                    } catch (e) { }
-                }
+                GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+                    if (metaWin) {
+                        metaWin.set_input_region(null);
+                    }
+                    return GLib.SOURCE_REMOVE;
+                });
+
                 return true;
             }
         }
