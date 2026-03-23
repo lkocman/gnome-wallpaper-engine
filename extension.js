@@ -24,6 +24,7 @@ export default class WallpaperExtension extends Extension {
         this._wallpaperWindow = null;
         this._raisedSignalId = null;
         this._windowCreatedId = null;
+        this._lowerFixApplied = false;
 
         this._indicatorSignalId = this._settings.connect(
             "changed::show-indicator",
@@ -131,19 +132,26 @@ export default class WallpaperExtension extends Extension {
                 (metaWin.get_title() === "wallpaper_bg" ||
                     metaWin.get_wm_class() === "wallpaper_bg")
             ) {
-                const isWayland = Meta.is_wayland_compositor();
-
-                // Base behavior (works on both)
                 metaWin.lower();
                 metaWin.stick();
-
                 metaWin.focus_on_click = false;
 
                 try {
                     metaWin.set_accept_focus(false);
                 } catch (_) { }
 
-                // Click-through
+                // Ensure it really stays below after mapping
+                if (!this._lowerFixApplied) {
+                    this._lowerFixApplied = true;
+
+                    let count = 0;
+                    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
+                        if (metaWin) metaWin.lower();
+                        count++;
+                        return count < 5;
+                    });
+                }
+
                 GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
                     try {
                         metaWin.set_input_region(null);
@@ -151,22 +159,6 @@ export default class WallpaperExtension extends Extension {
                     return GLib.SOURCE_REMOVE;
                 });
 
-                // X11-only improvements
-                if (!isWayland) {
-                    try {
-                        metaWin.make_below();
-                    } catch (_) { }
-
-                    try {
-                        metaWin.set_skip_taskbar(true);
-                    } catch (_) { }
-
-                    try {
-                        metaWin.set_window_type(Meta.WindowType.DESKTOP);
-                    } catch (_) { }
-                }
-
-                // Connect signals
                 if (!this._wallpaperWindow) {
                     this._wallpaperWindow = metaWin;
 
@@ -183,7 +175,6 @@ export default class WallpaperExtension extends Extension {
 
                 return true;
             }
-
         }
 
         return false;
@@ -194,6 +185,8 @@ export default class WallpaperExtension extends Extension {
             this._mpvProcess.force_exit();
             this._mpvProcess = null;
         }
+
+        this._lowerFixApplied = false;
 
         if (this._raisedSignalId && this._wallpaperWindow) {
             this._wallpaperWindow.disconnect(this._raisedSignalId);
