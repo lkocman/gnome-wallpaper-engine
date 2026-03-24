@@ -1,10 +1,16 @@
 # 🌌 GNOME Live Wallpaper Engine
 
+No complex setup. No heavy dependencies. Just mpv + the extension.
+
 The **simplest and most reliable way** to use live wallpapers on GNOME — fully compatible with **Wayland & X11**.
 
 Powered by **mpv** for maximum performance, low resource usage, and full format support (MP4, GIF, WebM, MKV…).
 
 If you like this project, consider giving it a star ⭐ — it really helps!
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/achu94)
+
+It helps me improve the project and keeps me motivated to work on it 🙏
 
 ---
 
@@ -20,14 +26,24 @@ If you like this project, consider giving it a star ⭐ — it really helps!
 
 - 🎬 **Integrated Gallery:** Browse and select wallpapers directly from GNOME Settings
 - 📥 **Smart Import:** Add videos with one click
-- 👻 **Ghost Mode:** Click-through support — interact with desktop icons while wallpaper runs
-- 📐 **No Black Bars:** Smart panscan fills the screen perfectly
-- 🚀 **GPU Accelerated:** Uses mpv with `hwdec=auto`
+- 🚀 **GPU Accelerated (enabled by default):** Uses mpv with `hwdec=auto`
 - ⚡ **Very Low CPU Usage:** Typically ~1–3%
 - 🔄 **Instant Apply:** Switch wallpapers in real-time
 - 🖥️ **Wayland Ready:** Works reliably where most tools fail
 - 📦 **Minimal Setup:** Only requires mpv
-- 🎞️ **Supports All Formats:** MP4, GIF, WebM, MKV and more
+- 🎞️ **Wide Format Support:** MP4, GIF, WebM, MKV and more
+- 🔁 **Autostart:** Automatically start wallpaper on login
+- 🧩 **Tray Icon Toggle:** Show or hide the top panel indicator
+
+---
+
+## 🚧 Roadmap
+
+⏸️ Auto-pause when a fullscreen app is active
+
+🖼️ Improved gallery with automatic thumbnails
+
+🎮 Steam Wallpaper Engine integration (auto-detect and list compatible wallpapers)
 
 ---
 
@@ -91,13 +107,14 @@ Then enable the extension via the **Extensions** app.
 1. Open the extension settings
 2. Click **"Add Video/GIF"**
 3. Select a wallpaper from the gallery
-4. Start via the top panel indicator
+4. Optionally Use the top panel indicator to start or stop playback
+5. Optionally, hide the tray icon from the settings
 
 ---
 
 ## 💡 Why this exists
 
-Built to solve the lack of **simple and reliable live wallpaper solutions on GNOME + Wayland**.
+I built this to solve the lack of simple and reliable live wallpaper solutions on GNOME, especially on Wayland.
 
 ---
 
