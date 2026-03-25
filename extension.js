@@ -4,6 +4,7 @@ import GLib from "gi://GLib";
 
 import { Indicator } from "./indicator.js";
 import { Wallpaper } from "./modules/wallpaper.js";
+import { AutoPause } from "./modules/autoPause.js";
 
 export default class WallpaperExtension extends Extension {
     enable() {
@@ -18,6 +19,9 @@ export default class WallpaperExtension extends Extension {
 
         this._indicator = null;
         this._wallpaper = new Wallpaper(this);
+
+        this._autoStop = new AutoPause(this, this._wallpaper);
+        this._autoStop.start();
 
         this._indicatorSignalId = this._settings.connect(
             "changed::show-indicator",
@@ -74,6 +78,11 @@ export default class WallpaperExtension extends Extension {
         if (this._indicator) {
             this._indicator.destroy();
             this._indicator = null;
+        }
+
+        if (this._autoStop) {
+            this._autoStop.stop();
+            this._autoStop = null;
         }
 
         this._settings = null;

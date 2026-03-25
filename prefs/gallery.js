@@ -1,8 +1,19 @@
 import Adw from "gi://Adw";
 import Gio from "gi://Gio";
 import Gtk from "gi://Gtk";
+import GLib from "gi://GLib";
 
 import { createWallpaperItem } from "./wallpaperItem.js";
+
+function generateThumbnail(videoPath, thumbPath) {
+    try {
+        GLib.spawn_command_line_sync(
+            `ffmpeg -y -i "${videoPath}" -ss 00:00:01 -vframes 1 "${thumbPath}"`
+        );
+    } catch (e) {
+        logError(e);
+    }
+}
 
 export function buildGalleryPage(ext, window, settings) {
     const page = new Adw.PreferencesPage({
@@ -16,20 +27,48 @@ export function buildGalleryPage(ext, window, settings) {
     });
 
     const addButton = new Gtk.Button({
-        label: "Add Video/GIF",
         icon_name: "list-add-symbolic",
-        margin_bottom: 12,
-        css_classes: ["suggested-action"],
+        valign: Gtk.Align.CENTER,
+        css_classes: ["suggested-action", "pill"],
+    });
+
+    const openFolderButton = new Gtk.Button({
+        icon_name: "folder-symbolic",
+        valign: Gtk.Align.CENTER,
+        css_classes: ["pill"],
     });
 
     const flowBox = new Gtk.FlowBox({
         valign: Gtk.Align.START,
-        max_children_per_line: 3,
-        min_children_per_line: 2,
         selection_mode: Gtk.SelectionMode.SINGLE,
-        row_spacing: 12,
-        column_spacing: 12,
+        row_spacing: 4,
+        column_spacing: 4,
     });
+
+    const bgDir = `${ext.path}/backgrounds`;
+    const directory = Gio.File.new_for_path(bgDir);
+
+    const ensureDirectory = () => {
+        if (!directory.query_exists(null)) {
+            try {
+                directory.make_directory_with_parents(null);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    };
+
+    const ensureThumbnail = (fileName) => {
+        const fullPath = `${bgDir}/${fileName}`;
+        const baseName = fileName.substring(0, fileName.lastIndexOf("."));
+        const thumbPath = `${bgDir}/${baseName}.jpg`;
+
+        const thumbFile = Gio.File.new_for_path(thumbPath);
+
+        if (!thumbFile.query_exists(null)) {
+            generateThumbnail(fullPath, thumbPath);
+        }
+    };
 
     const refreshGallery = () => {
         let child = flowBox.get_first_child();
@@ -38,17 +77,7 @@ export function buildGalleryPage(ext, window, settings) {
             child = flowBox.get_first_child();
         }
 
-        const bgDir = `${ext.path}/backgrounds`;
-        const directory = Gio.File.new_for_path(bgDir);
-
-        if (!directory.query_exists(null)) {
-            try {
-                directory.make_directory_with_parents(null);
-            } catch (e) {
-                console.error(e);
-                return;
-            }
-        }
+        ensureDirectory();
 
         try {
             const enumerator = directory.enumerate_children(
@@ -62,7 +91,9 @@ export function buildGalleryPage(ext, window, settings) {
 
             while ((info = enumerator.next_file(null)) !== null) {
                 const fileName = info.get_name();
+
                 if (supported.some(ext => fileName.toLowerCase().endsWith(ext))) {
+                    ensureThumbnail(fileName);
                     flowBox.append(createWallpaperItem(bgDir, fileName));
                 }
             }
@@ -91,20 +122,33 @@ export function buildGalleryPage(ext, window, settings) {
         chooser.connect("response", (res, response_id) => {
             if (response_id === Gtk.ResponseType.ACCEPT) {
                 const sourceFile = chooser.get_file();
-                const destPath = `${ext.path}/backgrounds/${sourceFile.get_basename()}`;
+                const fileName = sourceFile.get_basename();
+
+                const destPath = `${bgDir}/${fileName}`;
                 const destFile = Gio.File.new_for_path(destPath);
 
                 try {
                     sourceFile.copy(destFile, Gio.FileCopyFlags.OVERWRITE, null, null);
+
+                    ensureThumbnail(fileName);
+
+                    settings.set_string("current-wallpaper", fileName);
+
                     refreshGallery();
                 } catch (e) {
                     console.error(e);
                 }
             }
+
             chooser.destroy();
         });
 
         chooser.show();
+    });
+
+    openFolderButton.connect("clicked", () => {
+        const dir = Gio.File.new_for_path(bgDir);
+        Gio.AppInfo.launch_default_for_uri(dir.get_uri(), null);
     });
 
     flowBox.connect("child-activated", (box, child) => {
@@ -113,7 +157,16 @@ export function buildGalleryPage(ext, window, settings) {
 
     refreshGallery();
 
-    group.add(addButton);
+    const buttonBox = new Gtk.Box({
+        orientation: Gtk.Orientation.HORIZONTAL,
+        spacing: 12,
+        margin_bottom: 12,
+    });
+
+    buttonBox.append(addButton);
+    buttonBox.append(openFolderButton);
+
+    group.add(buttonBox);
     group.add(flowBox);
     page.add(group);
 

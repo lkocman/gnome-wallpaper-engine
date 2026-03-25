@@ -1,6 +1,8 @@
 import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
+import { WindowUtils } from "./windowUtils.js";
+
 export class Wallpaper {
     constructor(ext) {
         this._ext = ext;
@@ -84,11 +86,7 @@ export class Wallpaper {
         for (const actor of windows) {
             const metaWin = actor.get_meta_window();
 
-            if (
-                metaWin &&
-                (metaWin.get_title() === "wallpaper_bg" ||
-                    metaWin.get_wm_class() === "wallpaper_bg")
-            ) {
+            if (WindowUtils.isWallpaperWindow(metaWin)) {
                 metaWin.lower();
                 metaWin.stick();
                 metaWin.focus_on_click = false;
