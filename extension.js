@@ -20,9 +20,6 @@ export default class WallpaperExtension extends Extension {
         this._indicator = null;
         this._wallpaper = new Wallpaper(this);
 
-        this._autoStop = new AutoPause(this, this._wallpaper);
-        this._autoStop.start();
-
         this._indicatorSignalId = this._settings.connect(
             "changed::show-indicator",
             () => this._updateIndicatorVisibility()
@@ -40,6 +37,9 @@ export default class WallpaperExtension extends Extension {
             }
             return GLib.SOURCE_REMOVE;
         });
+        
+        this._autoPause = new AutoPause(this, this._wallpaper);
+        this._autoPause.start();
     }
 
     _updateIndicatorVisibility() {
@@ -80,9 +80,9 @@ export default class WallpaperExtension extends Extension {
             this._indicator = null;
         }
 
-        if (this._autoStop) {
-            this._autoStop.stop();
-            this._autoStop = null;
+        if (this._autoPause) {
+            this._autoPause.stop();
+            this._autoPause = null;
         }
 
         this._settings = null;
